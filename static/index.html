@@ -17,7 +17,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 0 0 40px;
+            padding: 0 0 60px;
         }
 
         /* ── Camera Screen ── */
@@ -31,7 +31,6 @@
             margin-bottom: 32px;
         }
 
-        /* Top bar */
         .top-bar {
             display: flex;
             align-items: center;
@@ -42,8 +41,8 @@
             font-size: 22px;
             font-weight: 700;
             letter-spacing: 6px;
-            color: #fff;
         }
+        .top-right { display: flex; align-items: center; gap: 8px; }
         .camera-pill {
             background: rgba(255,255,255,0.12);
             border: 1px solid rgba(255,255,255,0.18);
@@ -53,27 +52,20 @@
             padding: 6px 14px;
             cursor: pointer;
             appearance: none;
-            max-width: 180px;
-            white-space: nowrap;
+            max-width: 170px;
             overflow: hidden;
             text-overflow: ellipsis;
-            backdrop-filter: blur(8px);
+            white-space: nowrap;
         }
-        .camera-pill:focus { outline: none; border-color: #B69DF8; }
-        .top-right { display: flex; align-items: center; gap: 8px; }
-        .bell-btn {
-            background: rgba(255,255,255,0.12);
+        .icon-circle {
+            background: rgba(255,255,255,0.1);
             border: none;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #fff;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff;
         }
-        .bell-btn svg { width: 18px; height: 18px; fill: white; }
+        .icon-circle svg { width: 18px; height: 18px; fill: white; }
 
         /* Viewfinder */
         .viewfinder {
@@ -84,17 +76,12 @@
             overflow: hidden;
         }
         #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
         }
-
-        /* Corner brackets */
         .corner {
             position: absolute;
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             border-color: rgba(255,255,255,0.75);
             border-style: solid;
         }
@@ -103,488 +90,582 @@
         .corner.bl { bottom: 18px; left: 18px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
         .corner.br { bottom: 18px; right: 18px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
 
-        /* Flash */
         .flash {
-            position: absolute;
-            inset: 0;
-            background: #fff;
-            opacity: 0;
-            pointer-events: none;
+            position: absolute; inset: 0;
+            background: #fff; opacity: 0; pointer-events: none;
         }
-        @keyframes doFlash {
-            0%   { opacity: 0.9; }
-            100% { opacity: 0; }
-        }
+        @keyframes doFlash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
         .flash.active { animation: doFlash 0.35s ease-out forwards; }
 
-        /* Loading overlay */
         .loading-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
             background: rgba(0,0,0,0.55);
             transition: opacity 0.3s;
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-        .loading-text { color: rgba(255,255,255,0.8); font-size: 14px; }
+        .loading-overlay span { color: rgba(255,255,255,0.8); font-size: 14px; }
 
-        /* Processing overlay */
         .processing-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             background: rgba(0,0,0,0.7);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            gap: 12px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s; gap: 12px;
         }
         .processing-overlay.visible { opacity: 1; pointer-events: all; }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.2);
-            border-top-color: #B69DF8;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .processing-overlay span { font-size: 14px; color: rgba(255,255,255,0.8); }
 
-        /* Controls bar */
+        /* Controls */
         .controls {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 24px 40px 32px;
         }
-
-        .icon-btn {
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
-            border: none;
+        .ctrl-btn {
+            width: 58px; height: 58px;
+            border-radius: 50%; border: none;
             background: rgba(255,255,255,0.1);
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #fff; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
             transition: background 0.15s, transform 0.1s;
             flex-shrink: 0;
         }
-        .icon-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.92); }
-        .icon-btn svg { width: 26px; height: 26px; fill: white; }
-        .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .ctrl-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.92); }
+        .ctrl-btn svg { width: 26px; height: 26px; fill: white; }
+        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /* Upload btn — shows last thumbnail */
         #uploadBtn { overflow: hidden; border: 2px solid rgba(255,255,255,0.25); position: relative; }
         #uploadBtn .thumb {
-            position: absolute;
-            inset: 0;
-            object-fit: cover;
-            border-radius: 50%;
+            position: absolute; inset: 0;
+            object-fit: cover; border-radius: 50%;
         }
         #uploadBtn .upload-icon { position: relative; z-index: 1; }
 
-        /* Shutter */
         .shutter {
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             border-radius: 50%;
             border: 4px solid rgba(255,255,255,0.85);
-            background: transparent;
-            cursor: pointer;
+            background: transparent; cursor: pointer;
             position: relative;
             transition: transform 0.12s, border-color 0.15s;
             flex-shrink: 0;
         }
         .shutter::after {
-            content: '';
-            position: absolute;
-            inset: 7px;
-            border-radius: 50%;
-            background: #fff;
-            transition: background 0.12s, transform 0.12s;
+            content: ''; position: absolute; inset: 7px;
+            border-radius: 50%; background: #fff;
+            transition: background 0.12s;
         }
         .shutter:active { transform: scale(0.91); border-color: #B69DF8; }
         .shutter:active::after { background: #B69DF8; }
         .shutter:disabled { opacity: 0.3; cursor: not-allowed; }
-        .shutter:disabled::after { background: #888; }
 
-        /* Toast */
+        /* ── Spinner ── */
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #B69DF8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .spinner-sm {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.15);
+            border-top-color: #B69DF8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Toast ── */
         .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
+            position: fixed; bottom: 24px; left: 50%;
             transform: translateX(-50%) translateY(80px);
             background: rgba(30,30,30,0.95);
-            color: #fff;
-            font-size: 14px;
-            padding: 12px 20px;
-            border-radius: 100px;
+            color: #fff; font-size: 14px;
+            padding: 12px 20px; border-radius: 100px;
             white-space: nowrap;
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
             transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
-            opacity: 0;
-            z-index: 999;
+            opacity: 0; z-index: 999;
             border: 1px solid rgba(255,255,255,0.1);
         }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.success { border-color: #65B168; }
-        .toast.error { border-color: #E46962; }
+        .toast.error   { border-color: #E46962; }
 
-        /* ── Timeline ── */
-        .timeline-section {
-            width: 100%;
-            max-width: 440px;
+        /* ── Section wrapper ── */
+        .section {
+            width: 100%; max-width: 440px;
             padding: 0 16px;
+            margin-bottom: 32px;
         }
-        .timeline-section h2 {
-            font-size: 18px;
-            font-weight: 500;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 16px;
-            letter-spacing: 1px;
+        .section-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-label {
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.45);
             text-transform: uppercase;
-            font-size: 12px;
         }
+
+        /* ── Gallery Grid ── */
         #gallery {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
+            gap: 3px;
         }
-        #gallery img {
-            width: 100%;
+        #gallery .thumb-wrap {
+            position: relative;
             aspect-ratio: 1;
-            object-fit: cover;
+            overflow: hidden;
             border-radius: 8px;
             cursor: pointer;
-            transition: opacity 0.15s;
+            background: #222;
         }
-        #gallery img:active { opacity: 0.7; }
+        #gallery img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+        #gallery .thumb-wrap:active img { transform: scale(0.95); }
         .gallery-empty {
             grid-column: 1 / -1;
             text-align: center;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.25);
             font-size: 14px;
-            padding: 32px 0;
+            padding: 40px 0;
         }
 
-        /* Lightbox */
+        /* ── Timelapse ── */
+        .tl-create-btn {
+            background: #6750A4;
+            border: none; border-radius: 100px;
+            color: #fff; font-size: 13px; font-weight: 600;
+            padding: 8px 18px; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: opacity 0.15s;
+        }
+        .tl-create-btn:active { opacity: 0.75; }
+        .tl-create-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .tl-create-btn svg { width: 16px; height: 16px; fill: white; }
+
+        .tl-loading {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 0;
+            color: rgba(255,255,255,0.6); font-size: 14px;
+        }
+
+        /* Video player */
+        .video-card {
+            background: #1a1a1a;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .video-card video {
+            width: 100%; display: block;
+            max-height: 70vh;
+            background: #000;
+        }
+        .video-card-footer {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+        }
+        .video-card-footer span {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+        }
+        .download-link {
+            background: rgba(255,255,255,0.1);
+            border: none; border-radius: 100px;
+            color: #B69DF8; font-size: 12px; font-weight: 600;
+            padding: 6px 14px; cursor: pointer;
+            text-decoration: none; display: flex; align-items: center; gap: 5px;
+        }
+        .download-link svg { width: 14px; height: 14px; fill: #B69DF8; }
+
+        /* Timelapse history list */
+        .tl-item {
+            display: flex; align-items: center;
+            gap: 12px; padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+        }
+        .tl-item:last-child { border-bottom: none; }
+        .tl-item-icon {
+            width: 40px; height: 40px;
+            background: rgba(103,80,164,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .tl-item-icon svg { width: 20px; height: 20px; fill: #B69DF8; }
+        .tl-item-info { flex: 1; }
+        .tl-item-name { font-size: 13px; color: rgba(255,255,255,0.8); }
+        .tl-item-date { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+        .tl-item-arrow { color: rgba(255,255,255,0.25); font-size: 18px; }
+
+        /* ── Lightbox ── */
         .lightbox {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.92);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.93);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none;
             transition: opacity 0.2s;
         }
         .lightbox.open { opacity: 1; pointer-events: all; }
         .lightbox img {
-            max-width: 95vw;
-            max-height: 90vh;
-            border-radius: 16px;
+            max-width: 96vw; max-height: 88vh;
+            border-radius: 12px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.8);
         }
-        .lightbox-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: rgba(255,255,255,0.15);
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            color: white;
-            font-size: 22px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .lb-close {
+            position: absolute; top: 16px; right: 16px;
+            background: rgba(255,255,255,0.13);
+            border: none; border-radius: 50%;
+            width: 44px; height: 44px;
+            color: white; font-size: 20px;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
 
-    <!-- Camera Screen -->
-    <div class="camera-screen">
-        <div class="top-bar">
-            <span class="app-title">MAYA</span>
-            <div class="top-right">
-                <select id="cameraSelect" class="camera-pill" style="display:none"></select>
-                <button class="bell-btn" id="notifyBtn" title="Tägliche Erinnerung">
-                    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="viewfinder">
-            <video id="video" autoplay playsinline muted></video>
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
-            <div class="flash" id="flash"></div>
-            <div class="loading-overlay" id="loadingOverlay">
-                <span class="loading-text">Kamera wird geladen…</span>
-            </div>
-            <div class="processing-overlay" id="processingOverlay">
-                <div class="spinner"></div>
-                <span>Gesicht wird ausgerichtet…</span>
-            </div>
-        </div>
-
-        <div class="controls">
-            <!-- Upload from file -->
-            <button class="icon-btn" id="uploadBtn" title="Foto hochladen">
-                <svg class="upload-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+<!-- Camera Screen -->
+<div class="camera-screen">
+    <div class="top-bar">
+        <span class="app-title">MAYA</span>
+        <div class="top-right">
+            <select id="cameraSelect" class="camera-pill" style="display:none"></select>
+            <button class="icon-circle" id="notifyBtn" title="Tägliche Erinnerung">
+                <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
             </button>
-
-            <!-- Shutter -->
-            <button class="shutter" id="shutterBtn" disabled></button>
-
-            <!-- Flip camera -->
-            <button class="icon-btn" id="flipBtn" title="Kamera wechseln" style="display:none">
-                <svg viewBox="0 0 24 24"><path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM12 8V5l-4 4 4 4v-3c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"/></svg>
-            </button>
-            <!-- Placeholder so shutter stays centered when flip is hidden -->
-            <div style="width:58px;height:58px;flex-shrink:0;" id="flipPlaceholder"></div>
         </div>
     </div>
 
-    <!-- Timeline -->
-    <div class="timeline-section">
-        <h2>Timeline</h2>
-        <div id="gallery"></div>
+    <div class="viewfinder">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div class="flash" id="flash"></div>
+        <div class="loading-overlay" id="loadingOverlay"><span>Kamera wird geladen…</span></div>
+        <div class="processing-overlay" id="processingOverlay">
+            <div class="spinner"></div>
+            <span>Gesicht wird ausgerichtet…</span>
+        </div>
     </div>
 
-    <!-- Hidden -->
-    <canvas id="canvas" style="display:none"></canvas>
-    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <div class="controls">
+        <button class="ctrl-btn" id="uploadBtn" title="Foto hochladen">
+            <svg class="upload-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+        <button class="shutter" id="shutterBtn" disabled></button>
+        <button class="ctrl-btn" id="flipBtn" style="display:none" title="Kamera wechseln">
+            <svg viewBox="0 0 24 24"><path d="M12 8V5l-4 4 4 4v-3c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"/></svg>
+        </button>
+        <div style="width:58px;height:58px;flex-shrink:0" id="flipPlaceholder"></div>
+    </div>
+</div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+<!-- Timeline -->
+<div class="section">
+    <div class="section-header">
+        <span class="section-label">Timeline</span>
+    </div>
+    <div id="gallery"></div>
+</div>
 
-    <!-- Lightbox -->
-    <div class="lightbox" id="lightbox">
-        <button class="lightbox-close" id="lightboxClose">&#x2715;</button>
-        <img id="lightboxImg" src="" alt="">
+<!-- Timelapse -->
+<div class="section">
+    <div class="section-header">
+        <span class="section-label">Timelapse</span>
+        <button class="tl-create-btn" id="createBtn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Video erstellen
+        </button>
     </div>
 
-    <script>
-        // ── Elements ──
-        const video           = document.getElementById('video');
-        const canvas          = document.getElementById('canvas');
-        const shutterBtn      = document.getElementById('shutterBtn');
-        const flipBtn         = document.getElementById('flipBtn');
-        const flipPlaceholder = document.getElementById('flipPlaceholder');
-        const uploadBtn       = document.getElementById('uploadBtn');
-        const fileInput       = document.getElementById('fileInput');
-        const cameraSelect    = document.getElementById('cameraSelect');
-        const notifyBtn       = document.getElementById('notifyBtn');
-        const gallery         = document.getElementById('gallery');
-        const flash           = document.getElementById('flash');
-        const loadingOverlay  = document.getElementById('loadingOverlay');
-        const processingOverlay = document.getElementById('processingOverlay');
-        const toast           = document.getElementById('toast');
-        const lightbox        = document.getElementById('lightbox');
-        const lightboxImg     = document.getElementById('lightboxImg');
-        const lightboxClose   = document.getElementById('lightboxClose');
+    <div id="tlLoading" style="display:none" class="tl-loading">
+        <div class="spinner-sm"></div>
+        <span>Video wird erstellt, bitte warten…</span>
+    </div>
 
-        // ── PWA ──
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
+    <!-- Active video player -->
+    <div id="tlPlayer" style="display:none" class="video-card">
+        <video id="tlVideo" controls playsinline></video>
+        <div class="video-card-footer">
+            <span id="tlVideoLabel"></span>
+            <a id="tlDownload" class="download-link" download>
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Download
+            </a>
+        </div>
+    </div>
 
-        // ── Toast ──
-        let toastTimer;
-        function showToast(msg, type = '') {
-            toast.textContent = msg;
-            toast.className = 'toast show ' + type;
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3000);
+    <!-- History list -->
+    <div id="tlList"></div>
+</div>
+
+<!-- Hidden -->
+<canvas id="canvas" style="display:none"></canvas>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose">&#x2715;</button>
+    <img id="lbImg" src="" alt="">
+</div>
+
+<script>
+// ── Elements ──
+const video      = document.getElementById('video');
+const canvas     = document.getElementById('canvas');
+const shutterBtn = document.getElementById('shutterBtn');
+const flipBtn    = document.getElementById('flipBtn');
+const flipPh     = document.getElementById('flipPlaceholder');
+const uploadBtn  = document.getElementById('uploadBtn');
+const fileInput  = document.getElementById('fileInput');
+const camSel     = document.getElementById('cameraSelect');
+const notifyBtn  = document.getElementById('notifyBtn');
+const gallery    = document.getElementById('gallery');
+const flash      = document.getElementById('flash');
+const loadingOv  = document.getElementById('loadingOverlay');
+const procOv     = document.getElementById('processingOverlay');
+const toast      = document.getElementById('toast');
+const lightbox   = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lbImg');
+const lbClose    = document.getElementById('lbClose');
+const createBtn  = document.getElementById('createBtn');
+const tlLoading  = document.getElementById('tlLoading');
+const tlPlayer   = document.getElementById('tlPlayer');
+const tlVideo    = document.getElementById('tlVideo');
+const tlDownload = document.getElementById('tlDownload');
+const tlLabel    = document.getElementById('tlVideoLabel');
+const tlList     = document.getElementById('tlList');
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg, type = '') {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3200);
+}
+
+// ── Camera ──
+let currentStream = null, cameras = [], camIdx = 0;
+
+async function stopStream() {
+    if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+}
+
+async function startCamera(deviceId) {
+    await stopStream();
+    const constraints = {
+        video: deviceId
+            ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+            : { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+    };
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        currentStream = stream;
+        await video.play();
+        loadingOv.classList.add('hidden');
+        shutterBtn.disabled = false;
+    } catch (err) {
+        loadingOv.querySelector('span').textContent = 'Kamerazugriff fehlgeschlagen.';
+        console.error(err);
+    }
+}
+
+async function initCameras() {
+    try {
+        const t = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        t.getTracks().forEach(tr => tr.stop());
+    } catch {
+        loadingOv.querySelector('span').textContent = 'Kamerazugriff verweigert.';
+        return;
+    }
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    cameras = devices.filter(d => d.kind === 'videoinput');
+    camSel.innerHTML = '';
+    cameras.forEach((c, i) => {
+        const o = document.createElement('option');
+        o.value = c.deviceId;
+        o.textContent = c.label || `Kamera ${i + 1}`;
+        camSel.appendChild(o);
+    });
+    if (cameras.length > 1) {
+        camSel.style.display = 'block';
+        flipBtn.style.display = 'flex';
+        flipPh.style.display = 'none';
+    }
+    await startCamera(cameras[0]?.deviceId);
+}
+
+camSel.addEventListener('change', () => { camIdx = camSel.selectedIndex; startCamera(cameras[camIdx].deviceId); });
+flipBtn.addEventListener('click', () => { camIdx = (camIdx + 1) % cameras.length; camSel.selectedIndex = camIdx; startCamera(cameras[camIdx].deviceId); });
+
+// ── Upload helper ──
+async function uploadBlob(blob, filename) {
+    procOv.classList.add('visible');
+    const fd = new FormData();
+    fd.append('file', blob, filename);
+    try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const r = await res.json();
+        if (r.status === 'success') { showToast('Gespeichert!', 'success'); loadGallery(); }
+        else showToast(r.message, 'error');
+    } catch { showToast('Upload fehlgeschlagen.', 'error'); }
+    procOv.classList.remove('visible');
+}
+
+// ── Shutter ──
+shutterBtn.addEventListener('click', () => {
+    if (!video.videoWidth) return;
+    flash.classList.remove('active');
+    void flash.offsetWidth;
+    flash.classList.add('active');
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => uploadBlob(blob, `maya_${Date.now()}.png`), 'image/png');
+});
+
+// ── File Upload ──
+uploadBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    uploadBlob(file, `maya_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`);
+    fileInput.value = '';
+});
+
+// ── Gallery ──
+async function loadGallery() {
+    try {
+        const data = await fetch('/api/images').then(r => r.json());
+        gallery.innerHTML = '';
+        if (!data.images.length) {
+            gallery.innerHTML = '<div class="gallery-empty">Noch keine Fotos vorhanden.</div>';
+            updateUploadThumb(null); return;
         }
-
-        // ── Camera ──
-        let currentStream = null;
-        let cameras = [];
-        let currentIndex = 0;
-
-        async function stopStream() {
-            if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
-        }
-
-        async function startCamera(deviceId) {
-            await stopStream();
-            const constraints = {
-                video: deviceId ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-                                : { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
-                audio: false
-            };
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                currentStream = stream;
-                await video.play();
-                loadingOverlay.classList.add('hidden');
-                shutterBtn.disabled = false;
-            } catch (err) {
-                loadingOverlay.querySelector('.loading-text').textContent = 'Kamerazugriff fehlgeschlagen.';
-                console.error(err);
-            }
-        }
-
-        async function initCameras() {
-            try {
-                const temp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                temp.getTracks().forEach(t => t.stop());
-            } catch {
-                loadingOverlay.querySelector('.loading-text').textContent = 'Kamerazugriff verweigert.';
-                return;
-            }
-
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            cameras = devices.filter(d => d.kind === 'videoinput');
-
-            cameraSelect.innerHTML = '';
-            cameras.forEach((cam, i) => {
-                const opt = document.createElement('option');
-                opt.value = cam.deviceId;
-                opt.textContent = cam.label || `Kamera ${i + 1}`;
-                cameraSelect.appendChild(opt);
-            });
-
-            if (cameras.length > 1) {
-                cameraSelect.style.display = 'block';
-                flipBtn.style.display = 'flex';
-                flipPlaceholder.style.display = 'none';
-            }
-
-            await startCamera(cameras[0]?.deviceId);
-        }
-
-        cameraSelect.addEventListener('change', () => {
-            currentIndex = cameraSelect.selectedIndex;
-            startCamera(cameras[currentIndex].deviceId);
+        data.images.forEach(name => {
+            const wrap = document.createElement('div');
+            wrap.className = 'thumb-wrap';
+            const img = document.createElement('img');
+            img.src = '/aligned/' + name;
+            img.loading = 'lazy';
+            wrap.appendChild(img);
+            wrap.addEventListener('click', () => openLightbox('/aligned/' + name));
+            gallery.appendChild(wrap);
         });
+        updateUploadThumb('/aligned/' + data.images[0]);
+    } catch (e) { console.error(e); }
+}
 
-        flipBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % cameras.length;
-            cameraSelect.selectedIndex = currentIndex;
-            startCamera(cameras[currentIndex].deviceId);
+function updateUploadThumb(src) {
+    let el = uploadBtn.querySelector('.thumb');
+    if (!src) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('img'); el.className = 'thumb'; uploadBtn.appendChild(el); }
+    el.src = src;
+}
+
+loadGallery();
+
+// ── Lightbox ──
+function openLightbox(src) { lbImg.src = src; lightbox.classList.add('open'); }
+lbClose.addEventListener('click', () => lightbox.classList.remove('open'));
+lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('open'); });
+
+// ── Timelapse ──
+function fmtDate(filename) {
+    const ts = parseInt(filename.replace('timelapse_', '').replace('.mp4', ''), 10);
+    if (isNaN(ts)) return filename;
+    return new Date(ts * 1000).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function playVideo(filename) {
+    const url = '/videos/' + filename;
+    tlVideo.src = url;
+    tlVideo.load();
+    tlDownload.href = url;
+    tlDownload.download = filename;
+    tlLabel.textContent = fmtDate(filename);
+    tlPlayer.style.display = 'block';
+    tlPlayer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    tlVideo.play().catch(() => {});
+}
+
+async function loadVideos() {
+    try {
+        const data = await fetch('/api/videos').then(r => r.json());
+        tlList.innerHTML = '';
+        data.videos.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'tl-item';
+            item.innerHTML = `
+                <div class="tl-item-icon">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div class="tl-item-info">
+                    <div class="tl-item-name">${fmtDate(name)}</div>
+                </div>
+                <span class="tl-item-arrow">›</span>`;
+            item.addEventListener('click', () => playVideo(name));
+            tlList.appendChild(item);
         });
+        // Auto-open latest
+        if (data.videos.length) playVideo(data.videos[0]);
+    } catch (e) { console.error(e); }
+}
 
-        // ── Capture ──
-        async function uploadBlob(blob, filename) {
-            processingOverlay.classList.add('visible');
-            const formData = new FormData();
-            formData.append('file', blob, filename);
-            try {
-                const res = await fetch('/upload', { method: 'POST', body: formData });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    showToast('Gespeichert!', 'success');
-                    loadGallery();
-                } else {
-                    showToast(result.message, 'error');
-                }
-            } catch {
-                showToast('Upload fehlgeschlagen.', 'error');
-            }
-            processingOverlay.classList.remove('visible');
+createBtn.addEventListener('click', async () => {
+    createBtn.disabled = true;
+    tlLoading.style.display = 'flex';
+    tlPlayer.style.display = 'none';
+    try {
+        const res = await fetch('/create-timelapse', { method: 'POST' });
+        const r = await res.json();
+        if (r.status === 'success') {
+            showToast('Timelapse erstellt!', 'success');
+            await loadVideos();
+        } else {
+            showToast(r.message, 'error');
         }
+    } catch { showToast('Fehler beim Erstellen.', 'error'); }
+    tlLoading.style.display = 'none';
+    createBtn.disabled = false;
+});
 
-        shutterBtn.addEventListener('click', () => {
-            if (!video.videoWidth) return;
+// ── Notifications ──
+notifyBtn.addEventListener('click', async () => {
+    if (!('Notification' in window)) { showToast('Keine Benachrichtigungen unterstützt.', 'error'); return; }
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+        navigator.serviceWorker.ready.then(reg => reg.active.postMessage({ action: 'startDailyReminder' }));
+        showToast('Erinnerung aktiviert!', 'success');
+    } else showToast('Berechtigung verweigert.', 'error');
+});
 
-            // Flash
-            flash.classList.remove('active');
-            void flash.offsetWidth;
-            flash.classList.add('active');
-
-            const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            canvas.toBlob(blob => uploadBlob(blob, `maya_${Date.now()}.png`), 'image/png');
-        });
-
-        // ── File Upload ──
-        uploadBtn.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-            const name = `maya_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-            uploadBlob(file, name);
-            fileInput.value = '';
-        });
-
-        // ── Gallery ──
-        async function loadGallery() {
-            try {
-                const res = await fetch('/api/images');
-                const data = await res.json();
-                gallery.innerHTML = '';
-                if (data.images.length === 0) {
-                    gallery.innerHTML = '<div class="gallery-empty">Noch keine Fotos vorhanden.</div>';
-                    updateUploadBtnThumb(null);
-                    return;
-                }
-                data.images.forEach(name => {
-                    const img = document.createElement('img');
-                    img.src = '/aligned/' + name;
-                    img.loading = 'lazy';
-                    img.addEventListener('click', () => openLightbox('/aligned/' + name));
-                    gallery.appendChild(img);
-                });
-                updateUploadBtnThumb('/aligned/' + data.images[0]);
-            } catch (e) { console.error(e); }
-        }
-
-        function updateUploadBtnThumb(src) {
-            let existing = uploadBtn.querySelector('.thumb');
-            if (!src) { if (existing) existing.remove(); return; }
-            if (!existing) {
-                existing = document.createElement('img');
-                existing.className = 'thumb';
-                uploadBtn.appendChild(existing);
-            }
-            existing.src = src;
-        }
-
-        loadGallery();
-
-        // ── Lightbox ──
-        function openLightbox(src) {
-            lightboxImg.src = src;
-            lightbox.classList.add('open');
-        }
-        lightboxClose.addEventListener('click', () => lightbox.classList.remove('open'));
-        lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('open'); });
-
-        // ── Notifications ──
-        notifyBtn.addEventListener('click', async () => {
-            if (!('Notification' in window)) { showToast('Browser unterstützt keine Benachrichtigungen.', 'error'); return; }
-            const perm = await Notification.requestPermission();
-            if (perm === 'granted') {
-                navigator.serviceWorker.ready.then(reg => reg.active.postMessage({ action: 'startDailyReminder' }));
-                showToast('Tägliche Erinnerung aktiviert!', 'success');
-            } else {
-                showToast('Berechtigung verweigert.', 'error');
-            }
-        });
-
-        initCameras();
-    </script>
+initCameras();
+loadVideos();
+</script>
 </body>
 </html>

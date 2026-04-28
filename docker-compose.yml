@@ -10,4 +10,5 @@ services:
     volumes:
       - ./maya_data/raw:/app/images/raw
       - ./maya_data/aligned:/app/images/aligned
+      - ./maya_data/videos:/app/videos
     restart: unless-stopped
