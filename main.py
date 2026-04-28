@@ -77,21 +77,26 @@ def align_image(image_path, output_path):
     return True
 
 
+def _fit_frame(img: np.ndarray, target_w: int, target_h: int) -> np.ndarray:
+    """Resize image to fit target size, preserving aspect ratio (black padding)."""
+    h, w = img.shape[:2]
+    scale = min(target_w / w, target_h / h)
+    nw, nh = int(w * scale), int(h * scale)
+    resized = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_AREA)
+    canvas = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+    y0 = (target_h - nh) // 2
+    x0 = (target_w - nw) // 2
+    canvas[y0:y0+nh, x0:x0+nw] = resized
+    return canvas
+
+
 def _build_timelapse() -> dict:
     aligned_files = sorted(glob.glob("images/aligned/*"))
     if len(aligned_files) < 2:
         return {"status": "error", "message": "Mindestens 2 ausgerichtete Fotos benötigt."}
 
-    first = cv2.imread(aligned_files[0])
-    if first is None:
-        return {"status": "error", "message": "Bilder konnten nicht gelesen werden."}
-
-    # Normalise to 720 px wide, even height (H.264 requirement)
-    target_w = 720
-    ratio = target_w / first.shape[1]
-    target_h = int(first.shape[0] * ratio)
-    if target_h % 2:
-        target_h += 1
+    # Fixed portrait canvas — all images fit into this without stretching
+    target_w, target_h = 720, 960   # 3:4 portrait, H.264-friendly (both even)
 
     fps = 30
     hold  = 5   # frames each photo is shown solid  (~0.17 s)
@@ -121,7 +126,7 @@ def _build_timelapse() -> dict:
     for path in aligned_files:
         img = cv2.imread(path)
         if img is not None:
-            images.append(cv2.resize(img, (target_w, target_h)))
+            images.append(_fit_frame(img, target_w, target_h))
 
     for i, img in enumerate(images):
         raw = img.tobytes()
