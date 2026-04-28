@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  maya-app:
+    # Das Image wird vollautomatisch von deinem öffentlichen Repo geladen!
+    image: ghcr.io/l8tenever/maya:master
+    container_name: maya-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./maya_data/raw:/app/images/raw
+      - ./maya_data/aligned:/app/images/aligned
+    restart: unless-stopped
