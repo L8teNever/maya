@@ -1,0 +1,6 @@
+__pycache__/
+images/raw/*
+!images/raw/.gitkeep
+images/aligned/*
+!images/aligned/.gitkeep
+static/icon.png

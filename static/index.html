@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MAYA</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#F3F0F7">
+    <style>
+        :root {
+            /* Material 3 Light Theme Colors */
+            --md-sys-color-primary: #6750A4;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            --md-sys-color-background: #F3F0F7;
+            --md-sys-color-surface: #FEF7FF;
+            --md-sys-color-on-surface: #1C1B1F;
+        }
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 500;
+            margin-top: 24px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: 28px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        video, canvas {
+            border-radius: 20px;
+            width: 100%;
+            background-color: #000;
+            margin-bottom: 16px;
+        }
+        canvas { display: none; }
+        .btn {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border: none;
+            border-radius: 100px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s, background-color 0.2s;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(103, 80, 164, 0.3);
+        }
+        .btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            box-shadow: none;
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: 500;
+            align-self: flex-start;
+            margin-left: max(0px, calc(50vw - 200px));
+        }
+        #gallery {
+            display: flex;
+            overflow-x: auto;
+            width: 100%;
+            max-width: 400px;
+            gap: 12px;
+            padding-bottom: 12px;
+            scroll-snap-type: x mandatory;
+        }
+        #gallery img {
+            height: 140px;
+            border-radius: 16px;
+            scroll-snap-align: start;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Hidden file input for mobile fallback */
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>MAYA</h1>
+    
+    <div class="card">
+        <video id="videoElement" autoplay playsinline></video>
+        <canvas id="canvasElement"></canvas>
+        <button class="btn" id="captureBtn">Foto aufnehmen</button>
+        <button class="btn btn-secondary" id="notifyBtn">Tägliche Erinnerung aktivieren</button>
+    </div>
+
+    <h2>Deine Timeline</h2>
+    <div id="gallery"></div>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasElement');
+        const captureBtn = document.getElementById('captureBtn');
+        const gallery = document.getElementById('gallery');
+        const notifyBtn = document.getElementById('notifyBtn');
+
+        // 1. PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js')
+            .then(() => console.log("Service Worker erfolgreich registriert"));
+        }
+
+        // 2. Kamera initialisieren
+        const constraints = { video: { facingMode: "user" }, audio: false };
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => {
+                console.error("Kamerafehler:", err);
+                alert("Kamera konnte nicht geladen werden. Bitte Berechtigung prüfen.");
+            });
+
+        // 3. Foto aufnehmen & automatisch an Backend senden
+        captureBtn.addEventListener('click', async () => {
+            if (!video.videoWidth) return alert("Kamera noch nicht bereit.");
+            
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                const filename = `maya_${Date.now()}.png`;
+                formData.append('file', blob, filename);
+                
+                captureBtn.textContent = "Verarbeite...";
+                captureBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/upload', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        alert("Foto erfolgreich ausgerichtet und gespeichert!");
+                        loadGallery(); // Galerie aktualisieren
+                    } else {
+                        alert("Fehler: " + result.message);
+                    }
+                } catch(e) {
+                    alert("Upload fehlgeschlagen.");
+                }
+                captureBtn.textContent = "Foto aufnehmen";
+                captureBtn.disabled = false;
+            }, 'image/png');
+        });
+
+        // 4. Galerie laden (Timeline)
+        async function loadGallery() {
+            try {
+                const res = await fetch('/api/images');
+                const data = await res.json();
+                gallery.innerHTML = "";
+                data.images.forEach(img => {
+                    const imgEl = document.createElement('img');
+                    imgEl.src = '/aligned/' + img;
+                    gallery.appendChild(imgEl);
+                });
+            } catch(e) { console.error("Fehler beim Laden der Galerie:", e); }
+        }
+        loadGallery();
+
+        // 5. Tägliche Push-Benachrichtigung einrichten
+        notifyBtn.addEventListener('click', async () => {
+            if (!("Notification" in window)) {
+                alert("Dein Browser unterstützt keine Desktop-Benachrichtigungen.");
+                return;
+            }
+            
+            let perm = await Notification.requestPermission();
+            if (perm === 'granted') {
+                alert("Erinnerungen aktiviert! Du erhältst täglich einen Push.");
+                navigator.serviceWorker.ready.then(reg => {
+                    // Sendet Nachricht an SW, um Trigger (oder Fallback) zu starten
+                    reg.active.postMessage({action: 'startDailyReminder'});
+                });
+            } else {
+                alert("Benachrichtigungs-Erlaubnis verweigert.");
+            }
+        });
+    </script>
+</body>
+</html>

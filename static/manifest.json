@@ -1,0 +1,16 @@
+{
+    "name": "MAYA Timeline",
+    "short_name": "MAYA",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#F3F0F7",
+    "theme_color": "#6750A4",
+    "description": "Daily selfie timeline with eye-tracking alignment.",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
