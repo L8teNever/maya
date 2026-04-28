@@ -5,224 +5,449 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MAYA</title>
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#F3F0F7">
+    <meta name="theme-color" content="#111111">
     <style>
-        :root {
-            --md-sys-color-primary: #6750A4;
-            --md-sys-color-on-primary: #FFFFFF;
-            --md-sys-color-primary-container: #EADDFF;
-            --md-sys-color-on-primary-container: #21005D;
-            --md-sys-color-background: #F3F0F7;
-            --md-sys-color-surface: #FEF7FF;
-            --md-sys-color-on-surface: #1C1B1F;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--md-sys-color-background);
-            color: var(--md-sys-color-on-surface);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px;
-            box-sizing: border-box;
+            font-family: 'Roboto', system-ui, sans-serif;
+            background: #111;
+            color: #fff;
             min-height: 100vh;
-        }
-        h1 {
-            font-size: 32px;
-            font-weight: 500;
-            margin-top: 24px;
-            margin-bottom: 24px;
-        }
-        .card {
-            background-color: var(--md-sys-color-surface);
-            border-radius: 28px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 0 0 40px;
         }
-        .video-wrapper {
-            position: relative;
+
+        /* ── Camera Screen ── */
+        .camera-screen {
             width: 100%;
-            margin-bottom: 16px;
+            max-width: 440px;
+            background: #1a1a1a;
+            border-radius: 0 0 40px 40px;
+            overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+            margin-bottom: 32px;
         }
-        video {
+
+        /* Top bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px 12px;
+        }
+        .app-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #fff;
+        }
+        .camera-pill {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
             border-radius: 20px;
-            width: 100%;
-            background-color: #000;
-            display: block;
+            color: #fff;
+            font-size: 12px;
+            padding: 6px 14px;
+            cursor: pointer;
+            appearance: none;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            backdrop-filter: blur(8px);
         }
-        canvas { display: none; }
-        .switch-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.5);
+        .camera-pill:focus { outline: none; border-color: #B69DF8; }
+        .top-right { display: flex; align-items: center; gap: 8px; }
+        .bell-btn {
+            background: rgba(255,255,255,0.12);
             border: none;
             border-radius: 50%;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+        }
+        .bell-btn svg { width: 18px; height: 18px; fill: white; }
+
+        /* Viewfinder */
+        .viewfinder {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            background: #000;
+            overflow: hidden;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Corner brackets */
+        .corner {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            border-color: rgba(255,255,255,0.75);
+            border-style: solid;
+        }
+        .corner.tl { top: 18px; left: 18px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+        .corner.tr { top: 18px; right: 18px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+        .corner.bl { bottom: 18px; left: 18px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+        .corner.br { bottom: 18px; right: 18px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+
+        /* Flash */
+        .flash {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+        }
+        @keyframes doFlash {
+            0%   { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+        .flash.active { animation: doFlash 0.35s ease-out forwards; }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.55);
+            transition: opacity 0.3s;
+        }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loading-text { color: rgba(255,255,255,0.8); font-size: 14px; }
+
+        /* Processing overlay */
+        .processing-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            gap: 12px;
+        }
+        .processing-overlay.visible { opacity: 1; pointer-events: all; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #B69DF8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .processing-overlay span { font-size: 14px; color: rgba(255,255,255,0.8); }
+
+        /* Controls bar */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 40px 32px;
+        }
+
+        .icon-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            transition: background 0.15s, transform 0.1s;
+            flex-shrink: 0;
         }
-        .switch-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
+        .icon-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.92); }
+        .icon-btn svg { width: 26px; height: 26px; fill: white; }
+        .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Upload btn — shows last thumbnail */
+        #uploadBtn { overflow: hidden; border: 2px solid rgba(255,255,255,0.25); position: relative; }
+        #uploadBtn .thumb {
+            position: absolute;
+            inset: 0;
+            object-fit: cover;
+            border-radius: 50%;
         }
-        .switch-btn:active { opacity: 0.7; transform: scale(0.95); }
-        .camera-select {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid #CAC4D0;
-            background: var(--md-sys-color-surface);
+        #uploadBtn .upload-icon { position: relative; z-index: 1; }
+
+        /* Shutter */
+        .shutter {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.85);
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.12s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+        .shutter::after {
+            content: '';
+            position: absolute;
+            inset: 7px;
+            border-radius: 50%;
+            background: #fff;
+            transition: background 0.12s, transform 0.12s;
+        }
+        .shutter:active { transform: scale(0.91); border-color: #B69DF8; }
+        .shutter:active::after { background: #B69DF8; }
+        .shutter:disabled { opacity: 0.3; cursor: not-allowed; }
+        .shutter:disabled::after { background: #888; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(30,30,30,0.95);
+            color: #fff;
             font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            margin-bottom: 12px;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236750A4' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            cursor: pointer;
-        }
-        .camera-select:focus { outline: 2px solid var(--md-sys-color-primary); }
-        .btn {
-            background-color: var(--md-sys-color-primary);
-            color: var(--md-sys-color-on-primary);
-            border: none;
+            padding: 12px 20px;
             border-radius: 100px;
-            padding: 16px 24px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+            opacity: 0;
+            z-index: 999;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { border-color: #65B168; }
+        .toast.error { border-color: #E46962; }
+
+        /* ── Timeline ── */
+        .timeline-section {
             width: 100%;
-            transition: opacity 0.2s, background-color 0.2s;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(103, 80, 164, 0.3);
+            max-width: 440px;
+            padding: 0 16px;
         }
-        .btn:active { opacity: 0.8; transform: scale(0.98); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary {
-            background-color: var(--md-sys-color-primary-container);
-            color: var(--md-sys-color-on-primary-container);
-            box-shadow: none;
-        }
-        h2 {
-            font-size: 20px;
+        .timeline-section h2 {
+            font-size: 18px;
             font-weight: 500;
-            align-self: flex-start;
-            margin-left: max(0px, calc(50vw - 200px));
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 12px;
         }
         #gallery {
-            display: flex;
-            overflow-x: auto;
-            width: 100%;
-            max-width: 400px;
-            gap: 12px;
-            padding-bottom: 12px;
-            scroll-snap-type: x mandatory;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
         }
         #gallery img {
-            height: 140px;
-            border-radius: 16px;
-            scroll-snap-align: start;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.15s;
         }
-        #statusMsg {
-            font-size: 13px;
-            color: #49454F;
-            margin-bottom: 8px;
-            min-height: 18px;
+        #gallery img:active { opacity: 0.7; }
+        .gallery-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 14px;
+            padding: 32px 0;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .lightbox.open { opacity: 1; pointer-events: all; }
+        .lightbox img {
+            max-width: 95vw;
+            max-height: 90vh;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
-    <h1>MAYA</h1>
 
-    <div class="card">
-        <div class="video-wrapper">
-            <video id="videoElement" autoplay playsinline></video>
-            <button class="switch-btn" id="switchBtn" title="Kamera wechseln" style="display:none">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 13a5 5 0 0 1 0-10 5 5 0 0 1 0 10zm3.5-5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-                    <path d="M12 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" style="display:none"/>
-                    <!-- flip icon arrows -->
-                    <path d="M12 8V5l-4 4 4 4v-3c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"/>
-                </svg>
-            </button>
+    <!-- Camera Screen -->
+    <div class="camera-screen">
+        <div class="top-bar">
+            <span class="app-title">MAYA</span>
+            <div class="top-right">
+                <select id="cameraSelect" class="camera-pill" style="display:none"></select>
+                <button class="bell-btn" id="notifyBtn" title="Tägliche Erinnerung">
+                    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                </button>
+            </div>
         </div>
-        <canvas id="canvasElement"></canvas>
-        <select class="camera-select" id="cameraSelect" style="display:none"></select>
-        <div id="statusMsg"></div>
-        <button class="btn" id="captureBtn" disabled>Kamera wird geladen…</button>
-        <button class="btn btn-secondary" id="notifyBtn">Tägliche Erinnerung aktivieren</button>
+
+        <div class="viewfinder">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+            <div class="flash" id="flash"></div>
+            <div class="loading-overlay" id="loadingOverlay">
+                <span class="loading-text">Kamera wird geladen…</span>
+            </div>
+            <div class="processing-overlay" id="processingOverlay">
+                <div class="spinner"></div>
+                <span>Gesicht wird ausgerichtet…</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <!-- Upload from file -->
+            <button class="icon-btn" id="uploadBtn" title="Foto hochladen">
+                <svg class="upload-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </button>
+
+            <!-- Shutter -->
+            <button class="shutter" id="shutterBtn" disabled></button>
+
+            <!-- Flip camera -->
+            <button class="icon-btn" id="flipBtn" title="Kamera wechseln" style="display:none">
+                <svg viewBox="0 0 24 24"><path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM12 8V5l-4 4 4 4v-3c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"/></svg>
+            </button>
+            <!-- Placeholder so shutter stays centered when flip is hidden -->
+            <div style="width:58px;height:58px;flex-shrink:0;" id="flipPlaceholder"></div>
+        </div>
     </div>
 
-    <h2>Deine Timeline</h2>
-    <div id="gallery"></div>
+    <!-- Timeline -->
+    <div class="timeline-section">
+        <h2>Timeline</h2>
+        <div id="gallery"></div>
+    </div>
+
+    <!-- Hidden -->
+    <canvas id="canvas" style="display:none"></canvas>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightboxClose">&#x2715;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
 
     <script>
-        const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('canvasElement');
-        const captureBtn = document.getElementById('captureBtn');
-        const cameraSelect = document.getElementById('cameraSelect');
-        const switchBtn = document.getElementById('switchBtn');
-        const gallery = document.getElementById('gallery');
-        const notifyBtn = document.getElementById('notifyBtn');
-        const statusMsg = document.getElementById('statusMsg');
+        // ── Elements ──
+        const video           = document.getElementById('video');
+        const canvas          = document.getElementById('canvas');
+        const shutterBtn      = document.getElementById('shutterBtn');
+        const flipBtn         = document.getElementById('flipBtn');
+        const flipPlaceholder = document.getElementById('flipPlaceholder');
+        const uploadBtn       = document.getElementById('uploadBtn');
+        const fileInput       = document.getElementById('fileInput');
+        const cameraSelect    = document.getElementById('cameraSelect');
+        const notifyBtn       = document.getElementById('notifyBtn');
+        const gallery         = document.getElementById('gallery');
+        const flash           = document.getElementById('flash');
+        const loadingOverlay  = document.getElementById('loadingOverlay');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const toast           = document.getElementById('toast');
+        const lightbox        = document.getElementById('lightbox');
+        const lightboxImg     = document.getElementById('lightboxImg');
+        const lightboxClose   = document.getElementById('lightboxClose');
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js');
+        // ── PWA ──
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
+
+        // ── Toast ──
+        let toastTimer;
+        function showToast(msg, type = '') {
+            toast.textContent = msg;
+            toast.className = 'toast show ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3000);
         }
 
+        // ── Camera ──
         let currentStream = null;
         let cameras = [];
         let currentIndex = 0;
 
         async function stopStream() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(t => t.stop());
-                currentStream = null;
-            }
+            if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
         }
 
         async function startCamera(deviceId) {
             await stopStream();
             const constraints = {
-                video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'user' },
+                video: deviceId ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                                : { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
                 audio: false
             };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 currentStream = stream;
-                captureBtn.textContent = 'Foto aufnehmen';
-                captureBtn.disabled = false;
-                statusMsg.textContent = '';
+                await video.play();
+                loadingOverlay.classList.add('hidden');
+                shutterBtn.disabled = false;
             } catch (err) {
-                statusMsg.textContent = 'Kamera konnte nicht geöffnet werden.';
+                loadingOverlay.querySelector('.loading-text').textContent = 'Kamerazugriff fehlgeschlagen.';
                 console.error(err);
             }
         }
 
         async function initCameras() {
-            statusMsg.textContent = 'Kamera wird gesucht…';
             try {
-                // Kurz Zugriff anfordern damit Browser Gerätelabels freigibt
-                const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                tempStream.getTracks().forEach(t => t.stop());
-            } catch (err) {
-                statusMsg.textContent = 'Kamerazugriff verweigert. Bitte Berechtigung erteilen.';
-                captureBtn.textContent = 'Kein Zugriff';
+                const temp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                temp.getTracks().forEach(t => t.stop());
+            } catch {
+                loadingOverlay.querySelector('.loading-text').textContent = 'Kamerazugriff verweigert.';
                 return;
             }
 
@@ -239,7 +464,8 @@
 
             if (cameras.length > 1) {
                 cameraSelect.style.display = 'block';
-                switchBtn.style.display = 'flex';
+                flipBtn.style.display = 'flex';
+                flipPlaceholder.style.display = 'none';
             }
 
             await startCamera(cameras[0]?.deviceId);
@@ -250,72 +476,111 @@
             startCamera(cameras[currentIndex].deviceId);
         });
 
-        switchBtn.addEventListener('click', () => {
+        flipBtn.addEventListener('click', () => {
             currentIndex = (currentIndex + 1) % cameras.length;
             cameraSelect.selectedIndex = currentIndex;
             startCamera(cameras[currentIndex].deviceId);
         });
 
-        captureBtn.addEventListener('click', async () => {
+        // ── Capture ──
+        async function uploadBlob(blob, filename) {
+            processingOverlay.classList.add('visible');
+            const formData = new FormData();
+            formData.append('file', blob, filename);
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('Gespeichert!', 'success');
+                    loadGallery();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch {
+                showToast('Upload fehlgeschlagen.', 'error');
+            }
+            processingOverlay.classList.remove('visible');
+        }
+
+        shutterBtn.addEventListener('click', () => {
             if (!video.videoWidth) return;
+
+            // Flash
+            flash.classList.remove('active');
+            void flash.offsetWidth;
+            flash.classList.add('active');
 
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, `maya_${Date.now()}.png`);
-
-                captureBtn.textContent = 'Verarbeite…';
-                captureBtn.disabled = true;
-
-                try {
-                    const res = await fetch('/upload', { method: 'POST', body: formData });
-                    const result = await res.json();
-                    if (result.status === 'success') {
-                        statusMsg.textContent = 'Gespeichert!';
-                        loadGallery();
-                    } else {
-                        statusMsg.textContent = 'Fehler: ' + result.message;
-                    }
-                } catch (e) {
-                    statusMsg.textContent = 'Upload fehlgeschlagen.';
-                }
-
-                captureBtn.textContent = 'Foto aufnehmen';
-                captureBtn.disabled = false;
-            }, 'image/png');
+            canvas.toBlob(blob => uploadBlob(blob, `maya_${Date.now()}.png`), 'image/png');
         });
 
+        // ── File Upload ──
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const name = `maya_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            uploadBlob(file, name);
+            fileInput.value = '';
+        });
+
+        // ── Gallery ──
         async function loadGallery() {
             try {
                 const res = await fetch('/api/images');
                 const data = await res.json();
                 gallery.innerHTML = '';
+                if (data.images.length === 0) {
+                    gallery.innerHTML = '<div class="gallery-empty">Noch keine Fotos vorhanden.</div>';
+                    updateUploadBtnThumb(null);
+                    return;
+                }
                 data.images.forEach(name => {
                     const img = document.createElement('img');
                     img.src = '/aligned/' + name;
+                    img.loading = 'lazy';
+                    img.addEventListener('click', () => openLightbox('/aligned/' + name));
                     gallery.appendChild(img);
                 });
+                updateUploadBtnThumb('/aligned/' + data.images[0]);
             } catch (e) { console.error(e); }
         }
+
+        function updateUploadBtnThumb(src) {
+            let existing = uploadBtn.querySelector('.thumb');
+            if (!src) { if (existing) existing.remove(); return; }
+            if (!existing) {
+                existing = document.createElement('img');
+                existing.className = 'thumb';
+                uploadBtn.appendChild(existing);
+            }
+            existing.src = src;
+        }
+
         loadGallery();
 
+        // ── Lightbox ──
+        function openLightbox(src) {
+            lightboxImg.src = src;
+            lightbox.classList.add('open');
+        }
+        lightboxClose.addEventListener('click', () => lightbox.classList.remove('open'));
+        lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('open'); });
+
+        // ── Notifications ──
         notifyBtn.addEventListener('click', async () => {
-            if (!('Notification' in window)) {
-                alert('Dein Browser unterstützt keine Benachrichtigungen.');
-                return;
-            }
+            if (!('Notification' in window)) { showToast('Browser unterstützt keine Benachrichtigungen.', 'error'); return; }
             const perm = await Notification.requestPermission();
             if (perm === 'granted') {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.active.postMessage({ action: 'startDailyReminder' });
-                });
-                alert('Erinnerungen aktiviert!');
+                navigator.serviceWorker.ready.then(reg => reg.active.postMessage({ action: 'startDailyReminder' }));
+                showToast('Tägliche Erinnerung aktiviert!', 'success');
             } else {
-                alert('Benachrichtigung verweigert.');
+                showToast('Berechtigung verweigert.', 'error');
             }
         });
 
