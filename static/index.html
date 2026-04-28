@@ -8,7 +8,6 @@
     <meta name="theme-color" content="#F3F0F7">
     <style>
         :root {
-            /* Material 3 Light Theme Colors */
             --md-sys-color-primary: #6750A4;
             --md-sys-color-on-primary: #FFFFFF;
             --md-sys-color-primary-container: #EADDFF;
@@ -47,13 +46,55 @@
             flex-direction: column;
             align-items: center;
         }
-        video, canvas {
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        video {
             border-radius: 20px;
             width: 100%;
             background-color: #000;
-            margin-bottom: 16px;
+            display: block;
         }
         canvas { display: none; }
+        .switch-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .switch-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        .switch-btn:active { opacity: 0.7; transform: scale(0.95); }
+        .camera-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #CAC4D0;
+            background: var(--md-sys-color-surface);
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 12px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236750A4' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+        .camera-select:focus { outline: 2px solid var(--md-sys-color-primary); }
         .btn {
             background-color: var(--md-sys-color-primary);
             color: var(--md-sys-color-on-primary);
@@ -68,10 +109,8 @@
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(103, 80, 164, 0.3);
         }
-        .btn:active {
-            opacity: 0.8;
-            transform: scale(0.98);
-        }
+        .btn:active { opacity: 0.8; transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary {
             background-color: var(--md-sys-color-primary-container);
             color: var(--md-sys-color-on-primary-container);
@@ -98,19 +137,33 @@
             scroll-snap-align: start;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        /* Hidden file input for mobile fallback */
-        #fileInput {
-            display: none;
+        #statusMsg {
+            font-size: 13px;
+            color: #49454F;
+            margin-bottom: 8px;
+            min-height: 18px;
         }
     </style>
 </head>
 <body>
     <h1>MAYA</h1>
-    
+
     <div class="card">
-        <video id="videoElement" autoplay playsinline></video>
+        <div class="video-wrapper">
+            <video id="videoElement" autoplay playsinline></video>
+            <button class="switch-btn" id="switchBtn" title="Kamera wechseln" style="display:none">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 13a5 5 0 0 1 0-10 5 5 0 0 1 0 10zm3.5-5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
+                    <path d="M12 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" style="display:none"/>
+                    <!-- flip icon arrows -->
+                    <path d="M12 8V5l-4 4 4 4v-3c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"/>
+                </svg>
+            </button>
+        </div>
         <canvas id="canvasElement"></canvas>
-        <button class="btn" id="captureBtn">Foto aufnehmen</button>
+        <select class="camera-select" id="cameraSelect" style="display:none"></select>
+        <div id="statusMsg"></div>
+        <button class="btn" id="captureBtn" disabled>Kamera wird geladen…</button>
         <button class="btn btn-secondary" id="notifyBtn">Tägliche Erinnerung aktivieren</button>
     </div>
 
@@ -121,91 +174,152 @@
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasElement');
         const captureBtn = document.getElementById('captureBtn');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const switchBtn = document.getElementById('switchBtn');
         const gallery = document.getElementById('gallery');
         const notifyBtn = document.getElementById('notifyBtn');
+        const statusMsg = document.getElementById('statusMsg');
 
-        // 1. PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js')
-            .then(() => console.log("Service Worker erfolgreich registriert"));
+            navigator.serviceWorker.register('/static/sw.js');
         }
 
-        // 2. Kamera initialisieren
-        const constraints = { video: { facingMode: "user" }, audio: false };
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => { video.srcObject = stream; })
-            .catch(err => {
-                console.error("Kamerafehler:", err);
-                alert("Kamera konnte nicht geladen werden. Bitte Berechtigung prüfen.");
+        let currentStream = null;
+        let cameras = [];
+        let currentIndex = 0;
+
+        async function stopStream() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+        }
+
+        async function startCamera(deviceId) {
+            await stopStream();
+            const constraints = {
+                video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'user' },
+                audio: false
+            };
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                currentStream = stream;
+                captureBtn.textContent = 'Foto aufnehmen';
+                captureBtn.disabled = false;
+                statusMsg.textContent = '';
+            } catch (err) {
+                statusMsg.textContent = 'Kamera konnte nicht geöffnet werden.';
+                console.error(err);
+            }
+        }
+
+        async function initCameras() {
+            statusMsg.textContent = 'Kamera wird gesucht…';
+            try {
+                // Kurz Zugriff anfordern damit Browser Gerätelabels freigibt
+                const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                tempStream.getTracks().forEach(t => t.stop());
+            } catch (err) {
+                statusMsg.textContent = 'Kamerazugriff verweigert. Bitte Berechtigung erteilen.';
+                captureBtn.textContent = 'Kein Zugriff';
+                return;
+            }
+
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            cameras = devices.filter(d => d.kind === 'videoinput');
+
+            cameraSelect.innerHTML = '';
+            cameras.forEach((cam, i) => {
+                const opt = document.createElement('option');
+                opt.value = cam.deviceId;
+                opt.textContent = cam.label || `Kamera ${i + 1}`;
+                cameraSelect.appendChild(opt);
             });
 
-        // 3. Foto aufnehmen & automatisch an Backend senden
+            if (cameras.length > 1) {
+                cameraSelect.style.display = 'block';
+                switchBtn.style.display = 'flex';
+            }
+
+            await startCamera(cameras[0]?.deviceId);
+        }
+
+        cameraSelect.addEventListener('change', () => {
+            currentIndex = cameraSelect.selectedIndex;
+            startCamera(cameras[currentIndex].deviceId);
+        });
+
+        switchBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % cameras.length;
+            cameraSelect.selectedIndex = currentIndex;
+            startCamera(cameras[currentIndex].deviceId);
+        });
+
         captureBtn.addEventListener('click', async () => {
-            if (!video.videoWidth) return alert("Kamera noch nicht bereit.");
-            
-            const context = canvas.getContext('2d');
+            if (!video.videoWidth) return;
+
+            const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
-                const filename = `maya_${Date.now()}.png`;
-                formData.append('file', blob, filename);
-                
-                captureBtn.textContent = "Verarbeite...";
+                formData.append('file', blob, `maya_${Date.now()}.png`);
+
+                captureBtn.textContent = 'Verarbeite…';
                 captureBtn.disabled = true;
-                
+
                 try {
-                    const response = await fetch('/upload', { method: 'POST', body: formData });
-                    const result = await response.json();
+                    const res = await fetch('/upload', { method: 'POST', body: formData });
+                    const result = await res.json();
                     if (result.status === 'success') {
-                        alert("Foto erfolgreich ausgerichtet und gespeichert!");
-                        loadGallery(); // Galerie aktualisieren
+                        statusMsg.textContent = 'Gespeichert!';
+                        loadGallery();
                     } else {
-                        alert("Fehler: " + result.message);
+                        statusMsg.textContent = 'Fehler: ' + result.message;
                     }
-                } catch(e) {
-                    alert("Upload fehlgeschlagen.");
+                } catch (e) {
+                    statusMsg.textContent = 'Upload fehlgeschlagen.';
                 }
-                captureBtn.textContent = "Foto aufnehmen";
+
+                captureBtn.textContent = 'Foto aufnehmen';
                 captureBtn.disabled = false;
             }, 'image/png');
         });
 
-        // 4. Galerie laden (Timeline)
         async function loadGallery() {
             try {
                 const res = await fetch('/api/images');
                 const data = await res.json();
-                gallery.innerHTML = "";
-                data.images.forEach(img => {
-                    const imgEl = document.createElement('img');
-                    imgEl.src = '/aligned/' + img;
-                    gallery.appendChild(imgEl);
+                gallery.innerHTML = '';
+                data.images.forEach(name => {
+                    const img = document.createElement('img');
+                    img.src = '/aligned/' + name;
+                    gallery.appendChild(img);
                 });
-            } catch(e) { console.error("Fehler beim Laden der Galerie:", e); }
+            } catch (e) { console.error(e); }
         }
         loadGallery();
 
-        // 5. Tägliche Push-Benachrichtigung einrichten
         notifyBtn.addEventListener('click', async () => {
-            if (!("Notification" in window)) {
-                alert("Dein Browser unterstützt keine Desktop-Benachrichtigungen.");
+            if (!('Notification' in window)) {
+                alert('Dein Browser unterstützt keine Benachrichtigungen.');
                 return;
             }
-            
-            let perm = await Notification.requestPermission();
+            const perm = await Notification.requestPermission();
             if (perm === 'granted') {
-                alert("Erinnerungen aktiviert! Du erhältst täglich einen Push.");
                 navigator.serviceWorker.ready.then(reg => {
-                    // Sendet Nachricht an SW, um Trigger (oder Fallback) zu starten
-                    reg.active.postMessage({action: 'startDailyReminder'});
+                    reg.active.postMessage({ action: 'startDailyReminder' });
                 });
+                alert('Erinnerungen aktiviert!');
             } else {
-                alert("Benachrichtigungs-Erlaubnis verweigert.");
+                alert('Benachrichtigung verweigert.');
             }
         });
+
+        initCameras();
     </script>
 </body>
 </html>
