@@ -592,7 +592,7 @@ async function loadGallery() {
             wrap.className = 'thumb-wrap';
 
             const img = document.createElement('img');
-            img.src = '/aligned/' + name;
+            img.src = '/raw/' + name;
             img.loading = 'lazy';
             img.addEventListener('click', () => openLightbox('/aligned/' + name));
 
@@ -615,7 +615,7 @@ async function loadGallery() {
             wrap.appendChild(del);
             gallery.appendChild(wrap);
         });
-        updateUploadThumb('/aligned/' + data.images[0]);
+        updateUploadThumb('/raw/' + data.images[0]);
     } catch (e) { console.error(e); }
 }
 

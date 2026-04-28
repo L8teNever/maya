@@ -144,6 +144,7 @@ def _build_timelapse() -> dict:
 
 
 app.mount("/static",  StaticFiles(directory="static"),         name="static")
+app.mount("/raw",     StaticFiles(directory="images/raw"),     name="raw")
 app.mount("/aligned", StaticFiles(directory="images/aligned"), name="aligned")
 app.mount("/videos",  StaticFiles(directory="videos"),         name="videos")
 
@@ -176,8 +177,10 @@ async def create_timelapse():
 
 @app.get("/api/images")
 async def get_images():
-    files = glob.glob("images/aligned/*")
-    return {"images": sorted([os.path.basename(f) for f in files], reverse=True)}
+    # Only show raw files that have a successfully aligned counterpart
+    aligned = {os.path.basename(f) for f in glob.glob("images/aligned/*")}
+    raw = [os.path.basename(f) for f in glob.glob("images/raw/*") if os.path.basename(f) in aligned]
+    return {"images": sorted(raw, reverse=True)}
 
 
 @app.delete("/api/images/{filename}")
