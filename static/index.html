@@ -234,6 +234,18 @@
             transition: transform 0.2s;
         }
         #gallery .thumb-wrap:active img { transform: scale(0.95); }
+        .del-btn {
+            position: absolute; top: 5px; right: 5px;
+            background: rgba(0,0,0,0.65);
+            border: none; border-radius: 50%;
+            width: 26px; height: 26px;
+            color: #fff; font-size: 15px; line-height: 1;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            z-index: 2;
+            transition: background 0.15s;
+        }
+        .del-btn:active { background: rgba(220,50,50,0.85); }
         .gallery-empty {
             grid-column: 1 / -1;
             text-align: center;
@@ -487,6 +499,15 @@ async function startCamera(deviceId) {
         await video.play();
         loadingOv.classList.add('hidden');
         shutterBtn.disabled = false;
+
+        // Mirror for front/user camera, normal for rear/environment
+        const track = stream.getVideoTracks()[0];
+        const facing = track.getSettings?.()?.facingMode;
+        const label  = (cameras[camIdx]?.label || '').toLowerCase();
+        const isFront = facing === 'user'
+            || facing === undefined   // desktop webcam → default mirror
+            || label.includes('front') || label.includes('vorder') || label.includes('selfie');
+        video.style.transform = isFront ? 'scaleX(-1)' : '';
     } catch (err) {
         loadingOv.querySelector('span').textContent = 'Kamerazugriff fehlgeschlagen.';
         console.error(err);
@@ -569,11 +590,29 @@ async function loadGallery() {
         data.images.forEach(name => {
             const wrap = document.createElement('div');
             wrap.className = 'thumb-wrap';
+
             const img = document.createElement('img');
             img.src = '/aligned/' + name;
             img.loading = 'lazy';
+            img.addEventListener('click', () => openLightbox('/aligned/' + name));
+
+            const del = document.createElement('button');
+            del.className = 'del-btn';
+            del.title = 'Löschen';
+            del.innerHTML = '&#x2715;';
+            del.addEventListener('click', async e => {
+                e.stopPropagation();
+                if (!confirm(`Foto „${name}" wirklich löschen?`)) return;
+                try {
+                    const r = await fetch(`/api/images/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                    const d = await r.json();
+                    if (d.status === 'success') { showToast('Foto gelöscht.'); loadGallery(); }
+                    else showToast(d.message, 'error');
+                } catch { showToast('Löschen fehlgeschlagen.', 'error'); }
+            });
+
             wrap.appendChild(img);
-            wrap.addEventListener('click', () => openLightbox('/aligned/' + name));
+            wrap.appendChild(del);
             gallery.appendChild(wrap);
         });
         updateUploadThumb('/aligned/' + data.images[0]);

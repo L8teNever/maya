@@ -180,6 +180,19 @@ async def get_images():
     return {"images": sorted([os.path.basename(f) for f in files], reverse=True)}
 
 
+@app.delete("/api/images/{filename}")
+async def delete_image(filename: str):
+    filename = os.path.basename(filename)  # prevent path traversal
+    aligned_path = f"images/aligned/{filename}"
+    raw_path     = f"images/raw/{filename}"
+    if not os.path.exists(aligned_path):
+        return {"status": "error", "message": "Bild nicht gefunden."}
+    os.remove(aligned_path)
+    if os.path.exists(raw_path):
+        os.remove(raw_path)
+    return {"status": "success"}
+
+
 @app.get("/api/videos")
 async def get_videos():
     files = glob.glob("videos/*.mp4")
